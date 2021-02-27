@@ -80,6 +80,22 @@ const Component = ({ isLoading }) => {
 }
 ```
 
+## Troubleshoot
+
+**Duplicate dependencies issues**
+
+You could have [Invalid Hook Call Warning](https://reactjs.org/warnings/invalid-hook-call-warning.html) issue if you use such as `npm link` or something.
+
+There is a way to solve this issue by using `alias`, please [read](https://github.com/facebook/react/issues/13991#issuecomment-435587809) this.
+
+```js
+alias: {
+  react: Path.resolve('./node_modules/react'),
+  'react-redux': Path.resolve('./node_modules/react-redux'),
+  ...
+},
+```
+
 ## License
 
 MIT

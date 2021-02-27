@@ -8,7 +8,6 @@ import {
   keys,
   test,
   complement,
-  anyPass,
   isNil,
   isEmpty,
   cond,
@@ -18,7 +17,6 @@ import {
 
 export const isNotNil = complement(isNil)
 export const isNotEmpty = complement(isEmpty)
-export const isNotNone = anyPass([isNotNil, isNotEmpty])
 
 export function isNone(v) {
   return isEmpty(v) || isNil(v)

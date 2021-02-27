@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useSelector, shallowEqual } from 'react-redux'
 import { compose, identity, F, path, find, values } from 'ramda'
 import {
+  isNotNil,
   isNone,
-  isNotNone,
   isEvent,
   genericError,
   orEmpty,
@@ -20,8 +20,8 @@ function useReduxForm({
   onSubmit = identity,
 } = {}) {
   const [isDisabled, setIsDisabled] = useState(false)
-  const getState = compose(path, parsePath)(storePath)
-  const formState = useSelector(getState, shallowEqual)
+  const getFormState = compose(path, parsePath)(storePath)
+  const formState = useSelector(getFormState, shallowEqual)
 
   useEffect(() => {
     setIsDisabled(disable())
@@ -29,7 +29,7 @@ function useReduxForm({
 
   const handleSubmit = (fn) => {
     const errors = validate(formState)
-    const isInvalid = compose(isNotNone, find(identity), values)(errors)
+    const isInvalid = compose(isNotNil, find(identity), values)(errors)
     const args = { values: formState, isInvalid, errors }
 
     if (typeof fn === 'function') {
