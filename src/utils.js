@@ -31,9 +31,14 @@ export function isEvent(v) {
     return false
   }
 
-  const isNativeEvt = v.nativeEvent.constructor.name.indexOf('Event') > -1
+  const isObj = is(Object, v)
+  let isNativeEvt = false
 
-  return is(Object, v) && !!v.nativeEvent && isNativeEvt
+  if (v.nativeEvent) {
+    isNativeEvt = v.nativeEvent.constructor.name.indexOf('Event') > -1
+  }
+
+  return isObj && isNativeEvt
 }
 
 export function genericError(message, props = {}) {
