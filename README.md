@@ -2,7 +2,7 @@
 
 **this is beta!!**
 
-Any kind of form components can be possible to use with Redux store object simply
+With `use-redux-form`, any kind of form components can be possible to use simply with Redux store object.
 
 > Inspired by ReduxForm
 
@@ -17,7 +17,7 @@ npm install use-redux-form
 ```js
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import useReduxForm from 'use-redux-form'
+import useReduxForm from 'use-redux-form/es'
 
 const Component = ({ isLoading }) => {
   const dispatch = useDispatch();
@@ -51,8 +51,8 @@ const Component = ({ isLoading }) => {
     // transform data before into props data
     // e.g. some components ask specific field type as value
     transform: ({ name, value }) => {
-      if (name === 'a' && isNumber(value)) {
-        return value + 1;
+      if (name === 'a' && isData(value)) {
+        return new Date(value);
       }
 
       return value;
@@ -86,7 +86,7 @@ const Component = ({ isLoading }) => {
 
 You could have [Invalid Hook Call Warning](https://reactjs.org/warnings/invalid-hook-call-warning.html) issue if you use such as `npm link` or something.
 
-There is a way to solve this issue by using `alias`, please [read](https://github.com/facebook/react/issues/13991#issuecomment-435587809) this.
+There is a way to solve this issue by using `alias`, please read [this](https://github.com/facebook/react/issues/13991#issuecomment-435587809).
 
 ```js
 alias: {
