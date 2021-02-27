@@ -1,0 +1,29 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "extends": ["airbnb"],
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly"
+  },
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2018,
+    "sourceType": "module"
+  },
+  "plugins": ["react", "react-hooks"],
+  "rules": {
+    "semi": "off",
+    "no-underscore-dangle": "off",
+    "operator-linebreak": ["warn"],
+    "object-curly-newline": "off",
+    "arrow-body-style": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  }
+}

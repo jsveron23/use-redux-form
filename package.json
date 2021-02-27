@@ -1,0 +1,65 @@
+{
+  "name": "use-redux-form",
+  "version": "1.0.0-beta.2",
+  "description": "React hook for using Redux store",
+  "author": "Tony Jin <jsveron23@gmail.com>",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "module": "es/index.js",
+  "files": [
+    "lib",
+    "es"
+  ],
+  "engines": {
+    "node": ">= 10.18.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsveron23/useReduxForm.git"
+  },
+  "scripts": {
+    "clean": "rimraf lib",
+    "build": "npm run clean && rollup --config ./rollup.config.js",
+    "lint": "eslint 'src/**/*.js'",
+    "prettier": "prettier -c src/**/*.js",
+    "prepublishOnly": "npm run build"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "arrowParens": "always",
+    "trailingComma": "all",
+    "bracketSpacing": true,
+    "proseWrap": "always"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.13.8",
+    "@babel/eslint-parser": "^7.13.8",
+    "@babel/plugin-proposal-class-properties": "^7.13.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.13.8",
+    "@babel/plugin-transform-runtime": "^7.13.8",
+    "@babel/preset-env": "^7.13.8",
+    "@babel/preset-react": "^7.12.13",
+    "@rollup/plugin-babel": "^5.3.0",
+    "core-js": "^3.9.0",
+    "eslint": "^7.20.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-react": "^7.22.0",
+    "eslint-plugin-react-hooks": "^4.2.0",
+    "prettier": "^2.2.1",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.40.0"
+  },
+  "peerDependencies": {
+    "react": "^16.8.0",
+    "react-dom": "^16.8.0"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.13.8",
+    "ramda": "^0.27.1",
+    "react-redux": "^7.2.2"
+  }
+}
