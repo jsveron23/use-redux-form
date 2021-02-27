@@ -1,6 +1,30 @@
-import { is, compose, flip, path, split, reduce, keys, curry } from 'ramda'
+import {
+  is,
+  compose,
+  map,
+  filter,
+  split,
+  reduce,
+  keys,
+  test,
+  complement,
+  anyPass,
+  isNil,
+  isEmpty,
+  cond,
+  identity,
+  T,
+} from 'ramda'
 
-export function falsyToEmpty(v) {
+export const isNotNil = complement(isNil)
+export const isNotEmpty = complement(isEmpty)
+export const isNotNone = anyPass([isNotNil, isNotEmpty])
+
+export function isNone(v) {
+  return isEmpty(v) || isNil(v)
+}
+
+export function orEmpty(v) {
   return v || ''
 }
 
@@ -12,10 +36,6 @@ export function isEvent(v) {
   const isNativeEvt = v.nativeEvent.constructor.name.indexOf('Event') > -1
 
   return is(Object, v) && !!v.nativeEvent && isNativeEvt
-}
-
-export function clean(v = []) {
-  return v.filter(Boolean)
 }
 
 export function genericError(message, props = {}) {
@@ -30,10 +50,18 @@ export function genericError(message, props = {}) {
   return err
 }
 
-function _extractState(state, rootPath) {
-  return compose(flip(path)(state), clean, split(/\.|\[(.+)\]/))(rootPath)
+export function parsePath(unparsedPath) {
+  return compose(
+    map(
+      cond([
+        [test(/[0-9]/), Number],
+        [T, identity],
+      ]),
+    ),
+    filter(Boolean),
+    split(/\.|\[(.+)\]/),
+  )(unparsedPath)
 }
-export const extractState = curry(_extractState)
 
 export function excludeProps(exclude, props) {
   return compose(

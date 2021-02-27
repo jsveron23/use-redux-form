@@ -51,7 +51,7 @@ const Component = ({ isLoading }) => {
     // transform data before into props data
     // e.g. some components ask specific field type as value
     transform: ({ name, value }) => {
-      if (name === 'a' && !Number.isNaN(Number(value))) {
+      if (name === 'a' && isNumber(value)) {
         return value + 1;
       }
 

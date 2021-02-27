@@ -1,40 +1,27 @@
 import { useState, useEffect } from 'react'
 import { useSelector, shallowEqual } from 'react-redux'
+import { compose, identity, F, path, find, values } from 'ramda'
 import {
-  isEmpty,
-  isNil,
-  compose,
-  identity,
-  F,
-  flip,
-  find,
-  values,
-  complement,
-  anyPass,
-} from 'ramda'
-import {
+  isNone,
+  isNotNone,
   isEvent,
   genericError,
-  falsyToEmpty,
-  extractState,
+  orEmpty,
+  parsePath,
   excludeProps,
 } from './utils'
 
-const isNotNil = complement(isNil)
-const isNotEmpty = complement(isEmpty)
-const isNotNone = anyPass([isNotNil, isNotEmpty])
-
 function useReduxForm({
   storePath = 'form',
-  disable = () => F,
+  disable = F,
   validate = () => ({}),
   transform = (props) => props.value,
   onChange = identity,
   onSubmit = identity,
 } = {}) {
   const [isDisabled, setIsDisabled] = useState(false)
-  const getReduxState = flip(extractState)(storePath)
-  const formState = useSelector(getReduxState, shallowEqual)
+  const getState = compose(path, parsePath)(storePath)
+  const formState = useSelector(getState, shallowEqual)
 
   useEffect(() => {
     setIsDisabled(disable())
@@ -43,11 +30,12 @@ function useReduxForm({
   const handleSubmit = (fn) => {
     const errors = validate(formState)
     const isInvalid = compose(isNotNone, find(identity), values)(errors)
+    const args = { values: formState, isInvalid, errors }
 
     if (typeof fn === 'function') {
-      fn({ values: formState, isInvalid, errors, onSubmit })
+      fn({ ...args, onSubmit })
     } else {
-      onSubmit({ values: formState, isInvalid, errors })
+      onSubmit({ ...args })
     }
   }
 
@@ -58,18 +46,17 @@ function useReduxForm({
       throw genericError('[name] is required')
     }
 
-    const reduxStoreValue = compose(
-      String,
-      falsyToEmpty,
-      extractState(formState),
-    )(name)
+    const storeValue = compose(
+      String, // if number, wrap it to string
+      orEmpty,
+      path(parsePath(name)),
+    )(formState)
 
     const transformedValue = transform({
-      value: reduxStoreValue,
+      value: storeValue,
       name,
     })
-    const isNone = isEmpty(transformedValue) || isNil(transformedValue)
-    const isFalsy = isRequired && isNone
+    const isFalsy = isRequired && isNone(transformedValue)
     const errors = validate(formState)
     const isInvalid = isFalsy || !!errors[name]
 
