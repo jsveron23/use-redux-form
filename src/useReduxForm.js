@@ -40,39 +40,48 @@ function useReduxForm({
   }
 
   const getFieldProps = (name, options = {}) => {
-    const { isRequired = false, exclude = [] } = options
+    const { isRequired = false, exclude = [], compute } = options
+    let computedName = name
+    let computedValue = path(parsePath(name), formState)
 
-    if (!name) {
+    if (!name || typeof name !== 'string') {
       throw genericError('[name] is required')
     }
 
-    const storeValue = compose(
+    if (compute) {
+      const computed = compute(computedValue, formState)
+
+      computedName = `${name}${computed.name}`
+      computedValue = computed.value
+    }
+
+    computedValue = compose(
       String, // if number, wrap it to string
       orEmpty,
-      path(parsePath(name)),
-    )(formState)
+    )(computedValue)
 
     const transformedValue = transform({
-      value: storeValue,
-      name,
+      value: computedValue,
+      name: computedName,
     })
+
     const isFalsy = isRequired && isNone(transformedValue)
     const errors = validate(formState)
-    const isInvalid = isFalsy || !!errors[name]
+    const isInvalid = isFalsy || !!errors[computedName]
 
     return excludeProps(exclude, {
       value: transformedValue,
       selected: transformedValue,
       disabled: isDisabled,
-      name,
+      name: computedName,
       isInvalid,
 
       onChange: (evt) => {
         const { value } = isEvent(evt) ? evt.target : { value: evt }
 
         onChange({
-          value: transform({ name, value }),
-          name,
+          value: transform({ name: computedName, value }),
+          name: computedName,
         })
       },
     })
