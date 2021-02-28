@@ -2,10 +2,6 @@
 
 [![npm](https://img.shields.io/npm/v/use-redux-form)](https://www.npmjs.com/package/use-redux-form)
 
-- **this is beta version**
-- **please, report any bugs**
-- **thank you!**
-
 With `use-redux-form`, any kind of form components can be possible to use simply with Redux store object.
 
 > Inspired by ReduxForm
@@ -18,11 +14,13 @@ npm install use-redux-form
 
 ## API
 
+***more docs are coming...***
+
 - [getFieldProps](./doc/getFieldProps.md)
 
 ## Usage
 
-- Advanced usages is creating...
+***examples are coming...***
 
 ```js
 import React from 'react'
@@ -31,6 +29,7 @@ import useReduxForm from 'use-redux-form/es'
 
 const Component = ({ isLoading }) => {
   const dispatch = useDispatch();
+
   const { handleSubmit, getFieldProps } = useReduxForm({
     storePath: 'user.form',
 
@@ -76,15 +75,7 @@ const Component = ({ isLoading }) => {
   });
 
   return (
-    {/* value, onChange */}
-    <Input {...getFieldProps('some-field-name', {
-      isRequired: true // default = false
-
-      // some components prop is not compatible with
-      // ['value', 'selected', 'disabled', 'name', 'isInvalid', 'onChange']
-      // that useReduxForm uses and also, you can un-use it
-      exclude: ['isInvalid'] // default = []
-    })} />
+    <Field {...getFieldProps('some-field-name' />
     <Button onClick={handleSubmit}>Confirm</Button>
   )
 }
@@ -112,7 +103,6 @@ alias: {
 - [ ] Provide API doc
 - [ ] Provide examples
 - [ ] Provide actions, types
-- [ ] Release 1.0.0 🎉
 
 ## License
 

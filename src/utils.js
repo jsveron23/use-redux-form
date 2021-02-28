@@ -13,6 +13,9 @@ import {
   cond,
   identity,
   T,
+  path,
+  hasPath,
+  curry,
 } from 'ramda'
 
 export const isNotNil = complement(isNil)
@@ -20,10 +23,6 @@ export const isNotEmpty = complement(isEmpty)
 
 export function isNone(v) {
   return isEmpty(v) || isNil(v)
-}
-
-export function orEmpty(v) {
-  return v || ''
 }
 
 export function isEvent(v) {
@@ -66,7 +65,12 @@ export function parsePath(unparsedPath) {
   )(unparsedPath)
 }
 
-export function excludeProps(exclude, props) {
+export const extractByPath = curry((parsedPath, v) => {
+  // to get rid of negitive array index
+  return hasPath(parsedPath, v) ? path(parsedPath, v) : ''
+})
+
+export const excludeProps = curry((exclude, props) => {
   return compose(
     reduce((acc, key) => {
       if (exclude.includes(key)) {
@@ -80,4 +84,4 @@ export function excludeProps(exclude, props) {
     }, {}),
     keys,
   )(props)
-}
+})

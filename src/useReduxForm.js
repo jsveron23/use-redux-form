@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useSelector, shallowEqual } from 'react-redux'
-import { compose, identity, F, path, find, values } from 'ramda'
+import { compose, identity, F, find, values, defaultTo } from 'ramda'
 import {
   isNotNil,
   isNone,
   isEvent,
   genericError,
-  orEmpty,
   parsePath,
+  extractByPath,
   excludeProps,
 } from './utils'
 
@@ -20,7 +20,7 @@ function useReduxForm({
   onSubmit = identity,
 } = {}) {
   const [isDisabled, setIsDisabled] = useState(false)
-  const getFormState = compose(path, parsePath)(storePath)
+  const getFormState = compose(extractByPath, parsePath)(storePath)
   const formState = useSelector(getFormState, shallowEqual)
 
   useEffect(() => {
@@ -39,49 +39,44 @@ function useReduxForm({
     }
   }
 
-  const getFieldProps = (name, options = {}) => {
-    const { isRequired = false, exclude = [], compute } = options
-    let computedName = name
-    let computedValue = path(parsePath(name), formState)
+  const getFieldProps = (fieldPath, options = {}) => {
+    const { isRequired = false, exclude = [], name = '', key } = options
+    let computedKey = fieldPath
+    let computedValue = extractByPath(parsePath(fieldPath), formState)
 
-    if (!name || typeof name !== 'string') {
-      throw genericError('[name] is required')
+    if (!fieldPath || typeof fieldPath !== 'string') {
+      throw genericError('invalid [fieldPath] given')
     }
 
-    if (compute) {
-      const computed = compute(computedValue, formState)
-
-      computedName = `${name}${computed.name}`
-      computedValue = computed.value
+    if (typeof key === 'function') {
+      computedKey = `${fieldPath}${key(computedValue, formState)}`
+      computedValue = extractByPath(parsePath(computedKey), formState)
     }
 
-    computedValue = compose(
-      String, // if number, wrap it to string
-      orEmpty,
-    )(computedValue)
+    computedValue = String(defaultTo('', computedValue))
 
     const transformedValue = transform({
       value: computedValue,
-      name: computedName,
+      name: computedKey,
     })
 
     const isFalsy = isRequired && isNone(transformedValue)
     const errors = validate(formState)
-    const isInvalid = isFalsy || !!errors[computedName]
+    const isInvalid = isFalsy || !!errors[computedKey]
 
     return excludeProps(exclude, {
       value: transformedValue,
       selected: transformedValue,
       disabled: isDisabled,
-      name: computedName,
+      name: name || computedKey,
       isInvalid,
 
       onChange: (evt) => {
         const { value } = isEvent(evt) ? evt.target : { value: evt }
 
         onChange({
-          value: transform({ name: computedName, value }),
-          name: computedName,
+          value: transform({ name: computedKey, value }),
+          name: computedKey,
         })
       },
     })
