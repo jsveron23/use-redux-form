@@ -3,14 +3,18 @@
 A function return form field props automatically base of given parameters
 
 ```js
-// getFieldProps(...args) =>
-//   { name, value, selected, onChange, disabled, isInvalid }
-const { getFieldProps } = useReduxForm(options)
+const Component = () => {
+  // getFieldProps(...args) =>
+  //   { name, value, selected, onChange, disabled, isInvalid }
+  const { getFieldProps } = useReduxForm(options)
+
+  return (
+    <Field {...getFieldProps(fieldPath, options?)} />
+  )
+}
 ```
 
-## Base
-
-Redux structure
+**Base Redux structure**
 
 ```js
 // reducer<user.js>
@@ -21,7 +25,7 @@ const initialState = {
       password: ''
     },
     someArray1: ['hello', 'world'],
-    someParentPath: {
+    someParentState: {
       someArray2: ['world', 'hello']
     }
   }
@@ -40,42 +44,38 @@ import user from './user.js'
 export default combineReducers({ user });
 ```
 
-## Usage
+## API
 
-### `name` (string)
+### `fieldPath` (string)
 
-- is input field name
-- is child property name of given Redux store path
-- is parent path when options.compute given
+* is input field name if option.name is not given
+* is target property name
+* is parent node when options.compute given
 
 ```js
 // usage #1
 const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
-return <Input {...getFieldProps('username')} />
+return <Field {...getFieldProps('username')} />
+// or
+const { getFieldProps } = useReduxForm({ storePath: 'user' })
+return <Field {...getFieldProps('form.username')} />
 
 // usage #2
-const { getFieldProps } = useReduxForm({ storePath: 'user' })
-return <Input {...getFieldProps('form.username')} />
+const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
+return <Field {...getFieldProps('someObj.password')} />
 
 // usage #3
 const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
-return <Input {...getFieldProps('someObj.password')} />
+return <Field {...getFieldProps('someArray1[0]')} /> // -> hello
 
 // usage #4
 const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
-return <Input {...getFieldProps('someArray1[0]')} /> // -> hello
-
-// usage #5
-const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
 return (
-  <Input
-    {...getFieldProps('someParentPath', {
-      compute() {
+  <Field
+    {...getFieldProps('someParentState', {
+      key(childNodeState) {
         // -> world
-        return {
-          name: 'someArray2[0]',
-          ...
-        }
+        return 'someArray2[0]'
       }
     })}
   />)
@@ -83,44 +83,61 @@ return (
 
 ### `options` (object?)
 
-#### `options.isRequired` (boolean?, default: false)
+#### `options.isRequired`
+> boolean?, default: false
 
 Whether a field component required or not
 
-- only for `isInvalid` prop currently
-- want to block processes before submitting, check `useReduxForm({ onSubmit })`
+* it would not validate value
+* only for `isInvalid` prop currently
+* validation before submitting, check `useReduxForm({ onSubmit })`
 
 ```js
 const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
 return (
-  <Input
-    {...getFieldProps('loginId', {
+  <Field
+    {...getFieldProps('username', {
       isRequired: true,
     })}
   />
 )
 ```
 
-#### `options.exclude` (array?, default: [])
+#### `options.name`
+> string?, default: ''
 
-If component do not support specify props which `useReduxForm` want to use, then it displays validation error on browser console. To get rid of the error message, use it like this.
+Field name
 
 ```js
 const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
 return (
-  <Input
+  <Field
+    {...getFieldProps('username', {
+      name: 'userid' // if not given, it would use `username`
+    })}
+  />
+)
+```
+
+#### `options.exclude`
+> array?, default: []
+
+If <Field /> do not support specify props which `useReduxForm` want to use, then it could display error on browser console. To get rid of the error message, use it like this.
+
+```js
+const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
+return (
+  <Field
     {...getFieldProps('segment-id', {
-      // getFieldProps return `isInvalid` as prop
-      // but component did not support
       exclude: ['isInvalid'],
     })}
   />
 )
 ```
 
-### `options.compute` (function?)
+### `options.key` (function?)
 
-Specific path is not possible to track by given path, let's say, there is a list array that dynamically add/remove by some action, then it will change index number after the action.
+Specific field path is not possible to sync value, such as dynamic list. There is a list array that dynamically add/remove by some action. It would be changed index number after the action triggering, You can use unique id as example to track it.
 
 ```js
 // reducer<user.js>
@@ -147,29 +164,21 @@ const initialState = {
 }
 
 const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
-// it can be ok at the first render, if would be expected 'A' value,
-// but after remove first item, then `list[0]` will be 'B' value
-return <Input {...getFieldProps('form.list[0]')} />
+// after remove first item, then `list[0]` will be 'B' value
+return <Field {...getFieldProps('form.list[0]')} />
 
 // this option is designed for dynamic list
 return (
   <SomeComponent>
     {list.map(({ id, type, name }) => {
       return (
-        <Input
+        <Field
           {...getFieldProps('form.list', {
-            // can be computing name|path from outside scope,
-            // then compute function not needed anymore
-            compute(state /* `name`, applied given name as path */) {
-              // state -> [{ type: 'A' }, ...]
-              const foundIndex = state.findIndex(lookingForSpecificId)
-              const foundValue = state.find(lookingForSpecificId)
+            key(childState /* `form.list` is parent node path */) {
+              const foundIndex = childState.findIndex(lookingForSpecificId)
 
               // now, this field component can track specific field without index
-              return {
-                name: `[${foundIndex}].name`, // -> 'form.list[index].name'
-                value: found.name,
-              }
+              return `[${foundIndex}].name`, // -> 'form.list[index].name'
             },
           })}
         />
