@@ -16,6 +16,10 @@ With `use-redux-form`, any kind of form components can be possible to use simply
 npm install use-redux-form
 ```
 
+## API
+
+- [getFieldProps](./doc/getFieldProps.md)
+
 ## Usage
 
 - Advanced usages is creating...
