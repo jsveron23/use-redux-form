@@ -135,7 +135,8 @@ return (
 )
 ```
 
-### `options.key` (function?)
+#### `options.key`
+> function?
 
 Specific field path is not possible to sync value, such as dynamic list. There is a list array that dynamically add/remove by some action. It would be changed index number after the action triggering, You can use unique id as example to track it.
 
