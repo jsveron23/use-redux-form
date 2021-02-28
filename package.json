@@ -10,6 +10,17 @@
     "lib",
     "es"
   ],
+  "keywords": [
+    "react",
+    "redux",
+    "hook",
+    "hooks",
+    "form",
+    "field",
+    "react-redux",
+    "use-redux-form",
+    "useReduxForm"
+  ],
   "engines": {
     "node": ">= 10.18.1"
   },

@@ -1,6 +1,10 @@
 # use-redux-form
 
-**this is beta!!**
+[![npm](https://img.shields.io/npm/v/use-redux-form)](https://www.npmjs.com/package/use-redux-form)
+
+- **this is beta version**
+- **please, report any bugs**
+- **thank you!**
 
 With `use-redux-form`, any kind of form components can be possible to use simply with Redux store object.
 
@@ -12,7 +16,9 @@ With `use-redux-form`, any kind of form components can be possible to use simply
 npm install use-redux-form
 ```
 
-## General Usage
+## Usage
+
+- Advanced usages is creating...
 
 ```js
 import React from 'react'
@@ -95,6 +101,14 @@ alias: {
   ...
 },
 ```
+
+## Todo
+
+- [ ] Unit test
+- [ ] Provide API doc
+- [ ] Provide examples
+- [ ] Provide actions, types
+- [ ] Release 1.0.0 🎉
 
 ## License
 
