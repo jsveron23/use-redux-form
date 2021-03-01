@@ -1,6 +1,6 @@
 {
   "name": "use-redux-form",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "React hook for using Redux store",
   "author": "Tony Jin <jsveron23@gmail.com>",
   "license": "MIT",
