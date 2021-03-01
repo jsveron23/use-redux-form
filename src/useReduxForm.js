@@ -32,7 +32,7 @@ function useReduxForm({
   }, [disable])
 
   const handleSubmit = (fn) => {
-    const errors = validate(formState)
+    const errors = validate(formState) || {}
     const isInvalid = compose(
       isNotNil,
       find(identity),
@@ -70,8 +70,8 @@ function useReduxForm({
     })
 
     const isFalsy = isRequired && isNone(transformedValue)
-    const errors = validate(formState)
-    const isInvalid = isFalsy || errors || (errors && !!errors[computedKey])
+    const errors = validate(formState) || {}
+    const isInvalid = isFalsy || !!errors[computedKey]
 
     return excludeProps(exclude, {
       value: transformedValue,
