@@ -58,8 +58,16 @@ function useReduxForm({
     }
 
     if (typeof key === 'function') {
-      computedKey = `${fieldPath}${key(computedValue, formState)}`
-      computedValue = extractByPath(parsePath(computedKey), formState)
+      const computedPath = key(computedValue, formState)
+      const hasNagativeIndex = /\[(-\d+?)\]/.test(computedPath)
+
+      // to get rid of negitive array index
+      if (hasNagativeIndex) {
+        computedValue = ''
+      } else {
+        computedKey = `${fieldPath}${computedPath}`
+        computedValue = extractByPath(parsePath(computedKey), formState)
+      }
     }
 
     computedValue = String(defaultTo('', computedValue))
