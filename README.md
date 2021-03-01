@@ -41,7 +41,7 @@ const { handleSubmit, getFieldProps } = useReduxForm({
   /**
    * Validate function
    * @default () => ({})
-   * @param  {Object} values [description]
+   * @param  {Object} values
    * @return {Object} empty object = valid
    */
   validate: (values) => {
@@ -57,8 +57,8 @@ const { handleSubmit, getFieldProps } = useReduxForm({
   /**
    * Transform values before reaching to `value`, `onChange`. It runs first render also.
    * @default (args) => args.value
-   * @param  {String} name  [description]
-   * @param  {*}      value [description]
+   * @param  {String} name  fieldPath
+   * @param  {*}      value
    * @param  {*?}     evt   if nil value, not from `onChange`
    * @return {*}            a component asks specific data type
    */
@@ -233,10 +233,10 @@ const { value, selected, disabled, name, isInvalid, onChange } = getFieldProps(
      * It would be changed index number after the action triggering,
      * you can use unique id as example to track it.
      * @default undefined
-     * @param  {*}      childNode this case child node of `someParentState`
+     * @param  {*}      childState this case child node of `someParentState`
      * @return {String} fieldPath
      */
-    key: (childNode) => {
+    key: (childState) => {
       const foundIndex = childState.findIndex(lookingForSpecificId)
 
       // now, this field component can track specific field without index
