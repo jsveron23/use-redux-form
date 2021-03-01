@@ -6,79 +6,259 @@ With `use-redux-form`, any kind of form components can be possible to use simply
 
 > Inspired by ReduxForm
 
+* Compatible with any component using `input tag`, `select tag`.
+* For example `<DatePicker {...getFieldProps('createdAt')} />`
+
 ## Install
 
 ```bash
 npm install use-redux-form
 ```
 
-## API
+## API Reference
 
-***more docs are coming...***
+### `useReduxForm`
 
-- [getFieldProps](./doc/getFieldProps.md)
-
-## Usage
-
-***examples are coming...***
+> `useReduxForm(options)`
 
 ```js
-import React from 'react'
-import { useDispatch } from 'react-redux'
-import useReduxForm from 'use-redux-form/es'
+const { handleSubmit, getFieldProps } = useReduxForm({
+  /**
+   * Base target of Redux store path
+   * @type {String}
+   * @required
+   */
+  storePath: 'user.form',
 
-const Component = ({ isLoading }) => {
-  const dispatch = useDispatch();
+  /**
+   * Set/unset disable fields which components using `getFieldProps`.
+   * @default F
+   * @see {@link https://ramdajs.com/docs/#F}
+   * @return {Boolean}
+   */
+  disable: () => isLoading,
 
-  const { handleSubmit, getFieldProps } = useReduxForm({
-    storePath: 'user.form',
+  /**
+   * Validate function
+   * @default () => ({})
+   * @param  {Object} values [description]
+   * @return {Object} empty object = valid
+   */
+  validate: (values) => {
+    const errors = {}
 
-    disable: () => isLoading,
+    if (!values.username) {
+      errors['username'] = 'required!'
+    }
 
-    validate: (values) => {
-      const errors = {};
+    return errors;
+  },
 
-      if (!values.a) {
-        errors.a = 'error!';
-      }
+  /**
+   * Transform values before reaching to `value`, `onChange`. It runs first render also.
+   * @default (args) => args.value
+   * @param  {String} name  [description]
+   * @param  {*}      value [description]
+   * @param  {*?}     evt   if nil value, not from `onChange`
+   * @return {*}            a component asks specific data type
+   */
+  transform: ({ name, value }, evt) => {
+    if (name === 'nil-to-zero') {
+      return '0'
+    }
 
-      return errors;
-    },
+    if (name === 'date') {
+      return new Date(value)
+    }
 
-    onSubmit: ({ isInvalid, errors }) => {
+    return value;
+  },
+
+  /**
+   * General `onChange` prop for all components using `getFieldProps`.
+   * @default identity
+   * @see {@link https://ramdajs.com/docs/#identity}
+   * @param  {String} name  fieldPath (getFieldProps)
+   * @param  {*}      value value that you typed or stored in Redux store
+   * @param  {*?}     evt   same as component return value from `onChange`
+   */
+  onChange: ({ name, value }, evt) => {
+    if (name === 'A') {
+      actionA(value)
+    }
+
+    action(value)
+  },
+
+  /**
+   * Submit function
+   * @default @default identity
+   * @see {@link https://ramdajs.com/docs/#identity}
+   * @param {Object}  values
+   * @param {Boolean} isInvalid
+   * @param {Object}  errors    'validate'
+   */
+  onSubmit: ({ values, isInvalid, errors }) => {
+    if (isInvalid) {
+      return Object.values(errors).forEach((value) => {
+        if (value) {
+          invalidAlert(value);
+        }
+      });
+    }
+
+    action(values);
+  },
+})
+
+return (
+  <Field {...getFieldProps('username')} />
+  <Button onClick={handleSubmit}>Submit<Button>
+  <Button onClick={() => handleSubmit(
+    /**
+     * Extra process you need to do before submitting
+     * @param {Object}  values
+     * @param {Boolean} isInvalid
+     * @param {Object}  errors    'validate'
+     */
+    ({ values, isInvalid, errors }) => {
       if (isInvalid) {
         return Object.values(errors).forEach((value) => {
           if (value) {
-            someAlert(value);
+            invalidAlert(value);
           }
         });
       }
 
-      dispatch(someAction());
+      action();
+    }
+  )}>Submit<Button>
+);
+```
+
+### `getFieldProps`
+
+A function return form field props
+
+> `getFieldProps(fieldPath, options?)`
+
+```js
+// reducer/user.js
+const initialState = {
+  form: {
+    username: '',
+    someObj: {
+      password: ''
     },
-
-    // transform data before into props data
-    // e.g. some components ask specific field type as value
-    transform: ({ name, value }) => {
-      if (name === 'a' && isData(value)) {
-        return new Date(value);
-      }
-
-      return value;
-    },
-
-    onChange: ({ name, value }) {
-      // name is key name
-      // value is from field
-      dispatch(someAction({ name, value }))
-    },
-  });
-
-  return (
-    <Field {...getFieldProps('some-field-name' />
-    <Button onClick={handleSubmit}>Confirm</Button>
-  )
+    someArray1: ['hello', 'world'],
+    someParentState: {
+      someArray2: ['world', 'hello'],
+      list: [
+        {
+          id: 1,
+          type: 'A',
+          name: 'X',
+        },
+        {
+          id: 2,
+          type: 'B',
+          name: 'Y',
+        },
+        {
+          id: 3,
+          type: 'C',
+          name: 'Z',
+        },
+      ],
+    }
+  }
 }
+
+function reducer() {
+  switch() {
+    ...
+  }
+}
+
+export default reducer
+
+// reducer/index.js
+import { combineReducers } from 'redux';
+import user from './user.js'
+
+export default combineReducers({ user });
+
+// usage
+const { value, selected, disabled, name, isInvalid, onChange } = getFieldProps(
+  /**
+   * fieldPath
+   * is input field name if `option.name` is not given
+   * is target property name
+   * is parent node when `options.key` given
+   * @type {String}
+   * @required
+   */
+  'someParentState',
+
+  {
+    /**
+     * Whether a field component required or not
+     * - it would not validate value
+     * - only for `isInvalid` prop currently
+     * - validation before submitting, check `useReduxForm({ onSubmit })`
+     * @type {Boolean}
+     * @default false
+     */
+    isRequired: true,
+
+    /**
+     * Field name (if not given, it would use `form.username` as field name)
+     * @type {String}
+     * @default ''
+     */
+    name: 'userid',
+
+    /**
+     * If <Field /> do not support specify props which `useReduxForm` uses,
+     * then it could display error|warning on browser console.
+     * To get rid of the message, use it like this.
+     * @type {Array}
+     * @default []
+     */
+    exclude: ['isInvalid', 'selected'],
+
+    /**
+     * Specific field path is impossible to sync value, such as dynamic list.
+     * There is a list array that dynamically add/remove by some action.
+     * It would be changed index number after the action triggering,
+     * you can use unique id as example to track it.
+     * @default undefined
+     * @param  {*}      childNode this case child node of `someParentState`
+     * @return {String} fieldPath
+     */
+    key: (childNode) => {
+      const foundIndex = childState.findIndex(lookingForSpecificId)
+
+      // now, this field component can track specific field without index
+      return `[${foundIndex}].name`, // -> 'form.list[index].name'
+    }
+  }
+)
+
+// usage #1
+const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
+return <Field {...getFieldProps('username')} />
+// or
+const { getFieldProps } = useReduxForm({ storePath: 'user' })
+return <Field {...getFieldProps('form.username')} />
+
+// usage #2
+const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
+return <Field {...getFieldProps('someObj.password')} />
+
+// usage #3
+const { getFieldProps } = useReduxForm({ storePath: 'user.form' })
+return <Field {...getFieldProps('someArray1[0]')} /> // -> hello
 ```
 
 ## Troubleshoot
@@ -100,8 +280,6 @@ alias: {
 ## Todo
 
 - [ ] Unit test
-- [ ] Provide API doc
-- [ ] Provide examples
 - [ ] Provide actions, types
 
 ## License

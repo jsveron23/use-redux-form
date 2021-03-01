@@ -12,13 +12,17 @@ import {
 } from './utils'
 
 function useReduxForm({
-  storePath = 'form',
+  storePath,
   disable = F,
   validate = () => ({}),
   transform = (props) => props.value,
   onChange = identity,
   onSubmit = identity,
 } = {}) {
+  if (!storePath) {
+    throw genericError('[storePath] is required!')
+  }
+
   const [isDisabled, setIsDisabled] = useState(false)
   const getFormState = compose(extractByPath, parsePath)(storePath)
   const formState = useSelector(getFormState, shallowEqual)
@@ -29,7 +33,12 @@ function useReduxForm({
 
   const handleSubmit = (fn) => {
     const errors = validate(formState)
-    const isInvalid = compose(isNotNil, find(identity), values)(errors)
+    const isInvalid = compose(
+      isNotNil,
+      find(identity),
+      values,
+      defaultTo({}),
+    )(errors)
     const args = { values: formState, isInvalid, errors }
 
     if (typeof fn === 'function') {
@@ -62,7 +71,7 @@ function useReduxForm({
 
     const isFalsy = isRequired && isNone(transformedValue)
     const errors = validate(formState)
-    const isInvalid = isFalsy || !!errors[computedKey]
+    const isInvalid = isFalsy || errors || (errors && !!errors[computedKey])
 
     return excludeProps(exclude, {
       value: transformedValue,
@@ -74,10 +83,13 @@ function useReduxForm({
       onChange: (evt) => {
         const { value } = isEvent(evt) ? evt.target : { value: evt }
 
-        onChange({
-          value: transform({ name: computedKey, value }),
-          name: computedKey,
-        })
+        onChange(
+          {
+            value: transform({ name: computedKey, value }, evt),
+            name: computedKey,
+          },
+          evt,
+        )
       },
     })
   }
