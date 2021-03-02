@@ -212,7 +212,7 @@ const { value, selected, disabled, name, isInvalid, onChange } = getFieldProps(
     isRequired: true,
 
     /**
-     * Field name (if not given, it would use `form.username` as field name)
+     * Field name (if not given, it would use `someParentState` as field name)
      * @type {String}
      * @default ''
      */

@@ -66,7 +66,6 @@ export function parsePath(unparsedPath) {
 }
 
 export const extractByPath = curry((parsedPath, v) => {
-  // to get rid of negitive array index
   return hasPath(parsedPath, v) ? path(parsedPath, v) : ''
 })
 
