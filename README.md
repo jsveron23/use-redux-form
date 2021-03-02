@@ -240,7 +240,8 @@ const { value, selected, disabled, name, isInvalid, onChange } = getFieldProps(
       const foundIndex = childState.findIndex(lookingForSpecificId)
 
       // now, this field component can track specific field without index
-      return `[${foundIndex}].name`, // -> 'form.list[index].name'
+      // -> `form.someParentState.list[${foundIndex}].name`
+      return `[${foundIndex}].name`,
     }
   }
 )
@@ -279,8 +280,8 @@ alias: {
 
 ## Todo
 
-- [ ] Unit test
-- [ ] Provide actions, types
+- [ ] unit test(useReduxForm.js)
+- [ ] Provide action, action.type
 
 ## License
 

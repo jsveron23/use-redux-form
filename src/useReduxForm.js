@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useSelector, shallowEqual } from 'react-redux'
-import { compose, identity, F, find, values, path, defaultTo } from 'ramda'
 import {
-  isNotNil,
-  isNone,
-  isEvent,
-  genericError,
-  parsePath,
-  excludeProps,
-} from './utils'
+  compose,
+  identity,
+  F,
+  find,
+  values,
+  path,
+  defaultTo,
+  omit,
+} from 'ramda'
+import { isNotNil, isNone, isEvent, genericError, parsePath } from './utils'
 
 function useReduxForm({
   storePath,
@@ -83,7 +85,7 @@ function useReduxForm({
     const errors = validate(formState) || {}
     const isInvalid = isFalsy || !!errors[finalPath] || !!errors[name]
 
-    return excludeProps(exclude, {
+    return omit(exclude, {
       value: transformedValue,
       selected: transformedValue,
       disabled: isDisabled,

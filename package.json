@@ -1,6 +1,6 @@
 {
   "name": "use-redux-form",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "React hook for using Redux store",
   "author": "Tony Jin <jsveron23@gmail.com>",
   "license": "MIT",
@@ -33,6 +33,7 @@
     "build": "npm run clean && rollup --config ./rollup.config.js",
     "lint": "eslint 'src/**/*.js'",
     "prettier": "prettier -c src/**/*.js",
+    "test": "ava",
     "prepublishOnly": "npm run build"
   },
   "prettier": {
@@ -45,6 +46,7 @@
     "proseWrap": "always"
   },
   "devDependencies": {
+    "@ava/babel": "^1.0.1",
     "@babel/core": "^7.13.8",
     "@babel/eslint-parser": "^7.13.8",
     "@babel/plugin-proposal-class-properties": "^7.13.0",
@@ -53,6 +55,8 @@
     "@babel/preset-env": "^7.13.8",
     "@babel/preset-react": "^7.12.13",
     "@rollup/plugin-babel": "^5.3.0",
+    "ava": "^3.15.0",
+    "browser-env": "^3.3.0",
     "core-js": "^3.9.0",
     "eslint": "^7.20.0",
     "eslint-config-airbnb": "^18.2.1",
@@ -69,6 +73,7 @@
     "react-dom": "^16.14.0"
   },
   "dependencies": {
+    "@babel/register": "^7.13.8",
     "@babel/runtime": "^7.13.8",
     "ramda": "^0.27.1",
     "react-redux": "^7.2.2"

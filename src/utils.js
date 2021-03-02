@@ -4,8 +4,6 @@ import {
   map,
   filter,
   split,
-  reduce,
-  keys,
   test,
   complement,
   isNil,
@@ -13,7 +11,6 @@ import {
   cond,
   identity,
   T,
-  curry,
 } from 'ramda'
 
 export const isNotNil = complement(isNil)
@@ -50,8 +47,9 @@ export function genericError(message, props = {}) {
   return err
 }
 
-export function parsePath(unparsedPath) {
+export function parsePath(unparsedPath = '') {
   return compose(
+    filter(Boolean),
     map(
       cond([
         [test(/[0-9]/), Number],
@@ -62,19 +60,3 @@ export function parsePath(unparsedPath) {
     split(/\.|\[(.+)\]/),
   )(unparsedPath)
 }
-
-export const excludeProps = curry((exclude, props) => {
-  return compose(
-    reduce((acc, key) => {
-      if (exclude.includes(key)) {
-        return acc
-      }
-
-      return {
-        ...acc,
-        [key]: props[key],
-      }
-    }, {}),
-    keys,
-  )(props)
-})
