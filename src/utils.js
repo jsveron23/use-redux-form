@@ -13,8 +13,6 @@ import {
   cond,
   identity,
   T,
-  path,
-  hasPath,
   curry,
 } from 'ramda'
 
@@ -64,10 +62,6 @@ export function parsePath(unparsedPath) {
     split(/\.|\[(.+)\]/),
   )(unparsedPath)
 }
-
-export const extractByPath = curry((parsedPath, v) => {
-  return hasPath(parsedPath, v) ? path(parsedPath, v) : ''
-})
 
 export const excludeProps = curry((exclude, props) => {
   return compose(

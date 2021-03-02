@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useSelector, shallowEqual } from 'react-redux'
-import { compose, identity, F, find, values, defaultTo } from 'ramda'
+import { compose, identity, F, find, values, path, defaultTo } from 'ramda'
 import {
   isNotNil,
   isNone,
   isEvent,
   genericError,
   parsePath,
-  extractByPath,
   excludeProps,
 } from './utils'
 
@@ -24,7 +23,7 @@ function useReduxForm({
   }
 
   const [isDisabled, setIsDisabled] = useState(false)
-  const getFormState = compose(extractByPath, parsePath)(storePath)
+  const getFormState = compose(path, parsePath)(storePath)
   const formState = useSelector(getFormState, shallowEqual)
 
   useEffect(() => {
@@ -49,43 +48,46 @@ function useReduxForm({
   }
 
   const getFieldProps = (fieldPath, options = {}) => {
-    const { isRequired = false, exclude = [], name = '', key } = options
-    let computedKey = fieldPath
-    let computedValue = extractByPath(parsePath(fieldPath), formState)
-
     if (!fieldPath || typeof fieldPath !== 'string') {
       throw genericError('invalid [fieldPath] given')
     }
 
-    if (typeof key === 'function') {
-      const computedPath = key(computedValue, formState)
-      const hasNagativeIndex = /\[(-\d+?)\]/.test(computedPath)
+    const { isRequired = false, exclude = [], name = '', key } = options
+    const parentPath = fieldPath
+    const parentRoot = path(parsePath(fieldPath), formState)
+    let finalPath = parentPath
+    let finalValue = parentRoot
 
-      // to get rid of negitive array index
+    if (typeof key === 'function') {
+      const childPath = key(parentRoot, formState)
+      const hasNagativeIndex = /\[(-\d+?)\]/.test(childPath)
+
+      finalPath = `${parentPath}${childPath}`
+
       if (hasNagativeIndex) {
-        computedValue = ''
+        finalValue = null
       } else {
-        computedKey = `${fieldPath}${computedPath}`
-        computedValue = extractByPath(parsePath(computedKey), formState)
+        finalPath = `${parentPath}${childPath}`
+        finalValue = path(parsePath(finalPath), formState)
       }
     }
 
-    computedValue = String(defaultTo('', computedValue))
+    finalValue = String(defaultTo('', finalValue))
 
     const transformedValue = transform({
-      value: computedValue,
-      name: computedKey,
+      value: finalValue,
+      name: finalPath,
     })
 
     const isFalsy = isRequired && isNone(transformedValue)
     const errors = validate(formState) || {}
-    const isInvalid = isFalsy || !!errors[computedKey]
+    const isInvalid = isFalsy || !!errors[finalPath] || !!errors[name]
 
     return excludeProps(exclude, {
       value: transformedValue,
       selected: transformedValue,
       disabled: isDisabled,
-      name: name || computedKey,
+      name: name || finalPath,
       isInvalid,
 
       onChange: (evt) => {
@@ -93,8 +95,8 @@ function useReduxForm({
 
         onChange(
           {
-            value: transform({ name: computedKey, value }, evt),
-            name: computedKey,
+            value: transform({ name: finalPath, value }, evt),
+            name: finalPath,
           },
           evt,
         )
