@@ -9,14 +9,15 @@ import {
   path,
   defaultTo,
   omit,
+  isEmpty,
 } from 'ramda'
 import { isNotNil, isNone, isEvent, genericError, parsePath } from './utils'
 
 function useReduxForm({
   storePath,
   disable = F,
-  validate = () => ({}),
   transform = (props) => props.value,
+  validate = identity,
   onChange = identity,
   onSubmit = identity,
 } = {}) {
@@ -25,6 +26,7 @@ function useReduxForm({
   }
 
   const [isDisabled, setIsDisabled] = useState(false)
+  const [errors, setErrors] = useState({})
   const getFormState = compose(path, parsePath)(storePath)
   const formState = useSelector(getFormState, shallowEqual)
 
@@ -32,8 +34,11 @@ function useReduxForm({
     setIsDisabled(disable())
   }, [disable])
 
+  useEffect(() => {
+    setErrors(validate(formState) || {})
+  }, [formState])
+
   const handleSubmit = (fn) => {
-    const errors = validate(formState) || {}
     const isInvalid = compose(
       isNotNil,
       find(identity),
@@ -82,7 +87,6 @@ function useReduxForm({
     })
 
     const isFalsy = isRequired && isNone(transformedValue)
-    const errors = validate(formState) || {}
     const isInvalid = isFalsy || !!errors[finalPath] || !!errors[name]
 
     return omit(exclude, {
@@ -107,6 +111,7 @@ function useReduxForm({
   }
 
   return {
+    isValidated: isEmpty(errors),
     isDisabled,
     handleSubmit,
     getFieldProps,
