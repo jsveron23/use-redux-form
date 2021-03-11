@@ -1,6 +1,6 @@
 # use-redux-form
 
-[![npm](https://img.shields.io/npm/v/use-redux-form)](https://www.npmjs.com/package/use-redux-form) <!--<img alt="npm" src="https://img.shields.io/npm/dw/use-redux-form">-->
+[![npm](https://img.shields.io/npm/v/use-redux-form)](https://www.npmjs.com/package/use-redux-form) [![dep](https://david-dm.org/jsveron23/useReduxForm.svg)](https://david-dm.org/jsveron23/useReduxForm)<!--<img alt="npm" src="https://img.shields.io/npm/dw/use-redux-form">-->
 
 With `use-redux-form`, any kind of form components can be possible to use simply with Redux store object.
 
