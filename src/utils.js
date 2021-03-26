@@ -47,9 +47,13 @@ export function genericError(message, props = {}) {
   return err
 }
 
+export function isPositiveInt(v) {
+  return Number.isInteger(Number(v)) > 0
+}
+
 export function parsePath(unparsedPath = '') {
   return compose(
-    filter(Boolean),
+    filter((item) => isPositiveInt(item) || is(String, item)),
     map(
       cond([
         [test(/[0-9]/), Number],
