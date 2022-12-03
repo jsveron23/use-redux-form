@@ -1,121 +1,142 @@
-import { useState, useEffect } from 'react'
-import { useSelector, shallowEqual } from 'react-redux'
-import {
-  compose,
-  identity,
-  F,
-  find,
-  values,
-  path,
-  defaultTo,
-  omit,
-  isEmpty,
-} from 'ramda'
-import { isNotNil, isNone, isEvent, genericError, parsePath } from './utils'
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
+import * as R from 'ramda';
+import { get } from 'lens-o';
+import { updateField } from './redux/actions';
+import { isEvent, genericError } from './utils';
 
+// TODO initial state
+
+/**
+ * use-redux-from hook
+ * @param  {Object}   options
+ * @param  {String}   options.storePath
+ * @param  {Array}    options.exclude
+ * @param  {Function} options.transform
+ * @param  {Function} options.validate
+ * @param  {Function} options.onSubmit
+ * @param  {Function} options.onDisable
+ * @param  {Function} options.onChange
+ * @param  {Boolean}  options.debug
+ * @return {Object}
+ */
 function useReduxForm({
-  storePath,
-  disable = F,
-  transform = (props) => props.value,
-  validate = identity,
-  onChange = identity,
-  onSubmit = identity,
+  storePath = '',
+  exclude = [],
+  transform = (o) => o.value,
+  validate = R.identity,
+  onSubmit = R.identity,
+  onDisable = R.F,
+  onChange = null,
+  debug = false,
 } = {}) {
-  if (!storePath) {
-    throw genericError('[storePath] is required!')
+  if (R.isNil(storePath)) {
+    throw genericError('given [storePath] is empty!');
   }
 
-  const [isDisabled, setIsDisabled] = useState(false)
-  const [errors, setErrors] = useState({})
-  const getFormState = compose(path, parsePath)(storePath)
-  const formState = useSelector(getFormState, shallowEqual)
+  const dispatch = useDispatch();
+  const formState = useSelector(get(storePath), shallowEqual);
+  const [isDisabled, setIsDisabled] = useState(false);
 
   useEffect(() => {
-    setIsDisabled(disable())
-  }, [disable])
+    setIsDisabled(onDisable());
+  }, [onDisable]);
 
-  useEffect(() => {
-    setErrors(validate(formState) || {})
-  }, [formState])
+  const errors = useMemo(() => {
+    return validate(formState) || {};
+  }, [validate, formState]);
 
-  const handleSubmit = (fn) => {
-    const isInvalid = compose(
-      isNotNil,
-      find(identity),
-      values,
-      defaultTo({}),
-    )(errors)
-    const args = { values: formState, isInvalid, errors }
+  const handleTransform = useCallback(
+    (name, value) => {
+      return transform({ name, value });
+    },
+    [transform],
+  );
 
-    if (typeof fn === 'function') {
-      fn({ ...args, onSubmit })
-    } else {
-      onSubmit({ ...args })
-    }
-  }
+  const handleChange = useCallback(
+    (fieldPath) => (evt) => {
+      let value = evt;
 
-  const getFieldProps = (fieldPath, options = {}) => {
-    if (!fieldPath || typeof fieldPath !== 'string') {
-      throw genericError('invalid [fieldPath] given')
-    }
-
-    const { isRequired = false, exclude = [], name = '', key } = options
-    const parentPath = fieldPath
-    const parentRoot = path(parsePath(fieldPath), formState)
-    let finalPath = parentPath
-    let finalValue = parentRoot
-
-    if (typeof key === 'function') {
-      const childPath = key(parentRoot, formState)
-      const hasNagativeIndex = /\[(-\d+?)\]/.test(childPath)
-
-      finalPath = `${parentPath}${childPath}`
-
-      if (hasNagativeIndex) {
-        finalValue = null
-      } else {
-        finalPath = `${parentPath}${childPath}`
-        finalValue = path(parsePath(finalPath), formState)
+      if (isEvent(evt)) {
+        value = evt.target;
       }
-    }
 
-    finalValue = String(defaultTo('', finalValue))
+      const args = {
+        value: handleTransform(fieldPath, value),
+        name: fieldPath,
+      };
 
-    const transformedValue = transform({
-      value: finalValue,
-      name: finalPath,
-    })
+      // changing value
 
-    const isFalsy = isRequired && isNone(transformedValue)
-    const isInvalid = isFalsy || !!errors[finalPath] || !!errors[name]
+      if (onChange === 'function') {
+        onChange(args);
+      } else {
+        dispatch(updateField(storePath, args));
+      }
+    },
+    [storePath, handleTransform, onChange, dispatch],
+  );
 
-    return omit(exclude, {
-      value: transformedValue,
-      selected: transformedValue,
-      disabled: isDisabled,
-      name: name || finalPath,
-      isInvalid,
+  const getKeys = useCallback(
+    (_exclude = [], include = []) => {
+      return R.compose(
+        R.without(...include),
+        R.uniq,
+        R.concat(exclude),
+      )(_exclude);
+    },
+    [exclude],
+  );
 
-      onChange: (evt) => {
-        const { value } = isEvent(evt) ? evt.target : { value: evt }
+  const handleSubmit = useCallback(() => {
+    onSubmit({ values: formState, errors });
+  }, [onSubmit, errors, formState]);
 
-        onChange(
-          {
-            value: transform({ name: finalPath, value }, evt),
-            name: finalPath,
-          },
-          evt,
-        )
-      },
-    })
+  const getFieldProps = useCallback(
+    (fieldPath, options = {}) => {
+      if (!R.isNil(fieldPath) || !R.is(String, fieldPath)) {
+        throw genericError('invalid [fieldPath] given!');
+      }
+
+      const { exclude: _exclude = [], include = [], name = '' } = options;
+
+      // before change
+      // TODO compose
+      const transformedValue = handleTransform(
+        fieldPath,
+        String(R.defaultTo('', get(fieldPath, formState))),
+      );
+
+      const fieldProps = {
+        onChange: handleChange(fieldPath),
+        value: transformedValue,
+        selected: transformedValue,
+        disabled: isDisabled,
+        name: name || fieldPath,
+      };
+
+      return R.omit(getKeys(_exclude, include), fieldProps);
+    },
+    [formState, isDisabled, handleChange, handleTransform, getKeys],
+  );
+
+  if (debug) {
+    /* eslint-disable */
+    console.groupCollapsed('useReuxForm:');
+    // TODO diff
+    console.log('state: ', formState);
+    console.groupEnd();
+    /* eslint-enable */
   }
 
   return {
-    isValidated: isEmpty(errors),
+    isValidated: R.isEmpty(errors),
+    values: formState,
+    errors,
     isDisabled,
     handleSubmit,
     getFieldProps,
-  }
+  };
 }
 
-export default useReduxForm
+export default useReduxForm;
