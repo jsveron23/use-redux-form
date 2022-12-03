@@ -2,8 +2,8 @@
 
 [![npm](https://img.shields.io/npm/v/use-redux-form)](https://www.npmjs.com/package/use-redux-form)
 
-With `use-redux-form`, any kind of form components can be possible to use simply
-with Redux store object.
+With `use-redux-form`, any kind of React form components can be possible to use
+simply with Redux store object.
 
 > Inspired by ReduxForm
 

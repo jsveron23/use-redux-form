@@ -58,7 +58,7 @@ function useReduxForm({
       let value = evt;
 
       if (isEvent(evt)) {
-        value = evt.target;
+        value = evt.target.value;
       }
 
       const args = {
@@ -68,7 +68,7 @@ function useReduxForm({
 
       // changing value
 
-      if (onChange === 'function') {
+      if (typeof onChange === 'function') {
         onChange(args);
       } else {
         dispatch(updateField(storePath, args));
@@ -94,7 +94,7 @@ function useReduxForm({
 
   const getFieldProps = useCallback(
     (fieldPath, options = {}) => {
-      if (!R.isNil(fieldPath) || !R.is(String, fieldPath)) {
+      if (R.isNil(fieldPath) || !R.is(String, fieldPath)) {
         throw genericError('invalid [fieldPath] given!');
       }
 
