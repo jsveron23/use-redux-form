@@ -1,4 +1,11 @@
-import { UPDATE_FIELD } from './types';
+import { SET_INITIAL_VALUES, UPDATE_FIELD } from './types';
+
+export function setInitialValues(values) {
+	return {
+		type: SET_INITIAL_VALUES,
+		payload: values,
+	};
+}
 
 export function updateField(parentState, { name, value }) {
 	return {

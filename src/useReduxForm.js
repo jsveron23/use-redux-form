@@ -2,15 +2,13 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import * as R from 'ramda';
 import { get } from 'lens-o';
-import { updateField } from './redux/actions';
+import { setInitialValues, updateField } from './redux/actions';
 import { isEvent, genericError } from './utils';
-
-// TODO initial state
 
 /**
  * use-redux-from hook
+ * @param  {String}   storePath
  * @param  {Object}   options
- * @param  {String}   options.storePath
  * @param  {Array}    options.exclude
  * @param  {Function} options.transform
  * @param  {Function} options.validate
@@ -20,16 +18,19 @@ import { isEvent, genericError } from './utils';
  * @param  {Boolean}  options.debug
  * @return {Object}
  */
-function useReduxForm({
-  storePath = '',
-  exclude = [],
-  transform = (o) => o.value,
-  validate = R.identity,
-  onSubmit = R.identity,
-  onDisable = R.F,
-  onChange = null,
-  debug = false,
-} = {}) {
+function useReduxForm(
+  storePath,
+  {
+    debug = false,
+    exclude = [],
+    transform = (o) => o.value,
+    validate = R.always({}),
+    onSubmit = R.identity,
+    onDisable = R.F,
+    onChange = null,
+  } = {},
+  initialValues = {},
+) {
   if (R.isNil(storePath)) {
     throw genericError('given [storePath] is empty!');
   }
@@ -39,19 +40,19 @@ function useReduxForm({
   const [isDisabled, setIsDisabled] = useState(false);
 
   useEffect(() => {
+    if (!onChange) {
+      dispatch(setInitialValues(initialValues));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     setIsDisabled(onDisable());
   }, [onDisable]);
 
   const errors = useMemo(() => {
     return validate(formState) || {};
   }, [validate, formState]);
-
-  const handleTransform = useCallback(
-    (name, value) => {
-      return transform({ name, value });
-    },
-    [transform],
-  );
 
   const handleChange = useCallback(
     (fieldPath) => (evt) => {
@@ -62,11 +63,9 @@ function useReduxForm({
       }
 
       const args = {
-        value: handleTransform(fieldPath, value),
+        value: transform({ name: fieldPath, value }),
         name: fieldPath,
       };
-
-      // changing value
 
       if (typeof onChange === 'function') {
         onChange(args);
@@ -74,10 +73,10 @@ function useReduxForm({
         dispatch(updateField(storePath, args));
       }
     },
-    [storePath, handleTransform, onChange, dispatch],
+    [storePath, transform, onChange, dispatch],
   );
 
-  const getKeys = useCallback(
+  const computeExclude = useCallback(
     (_exclude = [], include = []) => {
       return R.compose(
         R.without(...include),
@@ -99,13 +98,14 @@ function useReduxForm({
       }
 
       const { exclude: _exclude = [], include = [], name = '' } = options;
-
-      // before change
-      // TODO compose
-      const transformedValue = handleTransform(
-        fieldPath,
-        String(R.defaultTo('', get(fieldPath, formState))),
-      );
+      const transformedValue = transform({
+        name: fieldPath,
+        value: R.compose(
+          (v) => String(v),
+          R.defaultTo(''),
+          get(fieldPath),
+        )(formState),
+      });
 
       const fieldProps = {
         onChange: handleChange(fieldPath),
@@ -114,15 +114,16 @@ function useReduxForm({
         disabled: isDisabled,
         name: name || fieldPath,
       };
+      const excludeKeys = computeExclude(_exclude, include);
 
-      return R.omit(getKeys(_exclude, include), fieldProps);
+      return R.omit(excludeKeys, fieldProps);
     },
-    [formState, isDisabled, handleChange, handleTransform, getKeys],
+    [formState, isDisabled, handleChange, transform, computeExclude],
   );
 
   if (debug) {
     /* eslint-disable */
-    console.groupCollapsed('useReuxForm:');
+    console.groupCollapsed('%cuseReuxForm:', 'color: #bada55');
     // TODO diff
     console.log('state: ', formState);
     console.groupEnd();

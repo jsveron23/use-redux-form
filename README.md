@@ -74,10 +74,9 @@ const {
    * Transform values before reaching to `value`, `onChange`.
    * @param  {String} name  fieldPath
    * @param  {*}      value
-   * @param  {*?}     evt   if nil value, not from `onChange`
    * @return {*}            a component asks specific data type
    */
-  transform: ({ name, value }, evt) => {
+  transform: ({ name, value }) => {
     if (name === 'nil-to-zero') {
       return '0'
     }
