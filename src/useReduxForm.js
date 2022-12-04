@@ -7,20 +7,21 @@ import { isEvent, genericError } from './utils';
 
 /**
  * use-redux-from hook
- * @param  {String}   storePath
- * @param  {Object}   options
- * @param  {Array}    options.exclude
- * @param  {Function} options.transform
- * @param  {Function} options.validate
- * @param  {Function} options.onSubmit
- * @param  {Function} options.onDisable
- * @param  {Function} options.onChange
- * @param  {Boolean}  options.debug
+ * @param  {String}  storePath
+ * @param  {Object?} [options={}]
+ * @param  {Object?} [initialValues={}] for now, only work when `onChange` is not given
  * @return {Object}
  */
-function useReduxForm(
-  storePath,
-  {
+function useReduxForm(storePath, options = {}, initialValues = {}) {
+  /**
+   * @param {Function?} transform
+   * @param {Function?} validate
+   * @param {Function?} onSubmit
+   * @param {Function?} onDisable
+   * @param {Function?} onChange
+   * @param {Boolean?}  debug
+   */
+  const {
     debug = false,
     exclude = [],
     transform = (o) => o.value,
@@ -28,11 +29,10 @@ function useReduxForm(
     onSubmit = R.identity,
     onDisable = R.F,
     onChange = null,
-  } = {},
-  initialValues = {},
-) {
-  if (R.isNil(storePath)) {
-    throw genericError('given [storePath] is empty!');
+  } = options;
+
+  if (!R.is(String, storePath) || R.isNil(storePath)) {
+    throw genericError('invalid [storePath] given!');
   }
 
   const dispatch = useDispatch();
@@ -41,7 +41,14 @@ function useReduxForm(
 
   useEffect(() => {
     if (!onChange) {
-      dispatch(setInitialValues(initialValues));
+      if (storePath.indexOf('.') === -1) {
+        dispatch(setInitialValues(initialValues));
+      } else {
+        const [, ...restPath] = storePath.split('.');
+        const _storePath = restPath.join('.');
+
+        dispatch(updateField({ name: _storePath, value: initialValues }));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -51,11 +58,16 @@ function useReduxForm(
   }, [onDisable]);
 
   const errors = useMemo(() => {
+    // NOTE `initialValues` is possible to be given but not initialzed yet
+    if (!formState) {
+      return {};
+    }
+
     return validate(formState) || {};
   }, [validate, formState]);
 
   const handleChange = useCallback(
-    (fieldPath) => (evt) => {
+    (name) => (evt) => {
       let value = evt;
 
       if (isEvent(evt)) {
@@ -63,14 +75,21 @@ function useReduxForm(
       }
 
       const args = {
-        value: transform({ name: fieldPath, value }),
-        name: fieldPath,
+        value: transform({ name, value }),
+        name,
       };
 
       if (typeof onChange === 'function') {
         onChange(args);
       } else {
-        dispatch(updateField(storePath, args));
+        if (storePath.indexOf('.') > -1) {
+          const [, ...restPath] = storePath.split('.');
+          const _storePath = restPath.join('.');
+
+          args.name = `${_storePath}.${args.name}`;
+        }
+
+        dispatch(updateField(args));
       }
     },
     [storePath, transform, onChange, dispatch],

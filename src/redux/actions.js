@@ -7,11 +7,10 @@ export function setInitialValues(values) {
 	};
 }
 
-export function updateField(parentState, { name, value }) {
+export function updateField({ name, value }) {
 	return {
 		type: UPDATE_FIELD,
 		payload: {
-			key: parentState,
 			name,
 			value,
 		},
