@@ -5,8 +5,6 @@
 With `use-redux-form`, any kind of React form components can be possible to use
 simply with Redux store object.
 
-> Inspired by ReduxForm
-
 - Compatible with any component using `input tag`, `select tag`.
 - For example `<DatePicker {...getFieldProps('createdAt')} />`
 
@@ -16,9 +14,45 @@ simply with Redux store object.
 npm install use-redux-form
 ```
 
+## Upgrade to v2
+
+```js
+// useReduxForm
+const { isValidated, isDisabled, values, errors, handleSubmit, getFieldProps } =
+  useReduxForm();
+
+// storePath
+useReduxForm({ storePath: 'this-is-store-path' }); // v1
+useReduxForm('this-is-store-path', {}); // v2
+// disable - onDisable
+useReduxForm({ disable: () => isLoading }); // v1
+useReduxForm('this-is-store-path', { onDisable: () => isLoading }); // v2
+// exclude (new)
+useReduxForm('this-is-store-path', { exclude: [] }); // v2
+// debug (new)
+useReduxForm('this-is-store-path', { debug: true }); // v2
+// initialValues (new) - only work when onChange is not given
+useReduxForm(
+  'this-is-store-path',
+  {},
+  {
+    /* here */
+  },
+); // v2
+
+// getFieldProps
+const { value, selected, disabled, name, onChange } = getFieldProps('a.2.b', {
+  key: () => {}, // no more
+  isRequired: true, // no more
+  include: [], // new
+  exclude: [], // v1, v2
+  name: 'my-name-is', // v1, v2
+});
+```
+
 ## Example
 
-[https://codesandbox.io/s/zen-hooks-3y684](https://codesandbox.io/s/zen-hooks-3y684)
+[Example](https://codesandbox.io/s/zen-hooks-3y684)
 
 ## API Reference
 
@@ -32,14 +66,7 @@ const {
   errors, // return object from validate function
   handleSubmit,
   getFieldProps
-} = useReduxForm({
-  /**
-   * Redux store path
-   * @type {String}
-   * @required
-   */
-  storePath: 'user.form',
-
+} = useReduxForm('user.form', {
   /**
    * Exclude props from `getFieldProps` return
    * @default []
@@ -57,14 +84,16 @@ const {
 
   /**
    * Form validate
+   * @default always({})
+   * @see {@link https://ramdajs.com/docs/#always}
    * @param  {Object} values
-   * @return {Object} empty object = valid
+   * @return {Object}        empty object = valid
    */
   validate: (values) => {
     const errors = {}
 
     if (!values.username) {
-      errors['username'] = 'required!'
+      errors.username = 'required!'
     }
 
     return errors;
@@ -72,6 +101,7 @@ const {
 
   /**
    * Transform values before reaching to `value`, `onChange`.
+   * @default (o) => o.value
    * @param  {String} name  fieldPath
    * @param  {*}      value
    * @return {*}            a component asks specific data type
@@ -127,6 +157,8 @@ const {
    * @default falss
    */
   debug: true
+}, {
+  ... // initialValues, work only when onChange null
 })
 
 return (
@@ -188,7 +220,14 @@ const { value, selected, disabled, name, onChange } = getFieldProps(
     name: 'userid',
 
     /**
-     * Exclude props of field
+     * Include props that returns from `getFieldProps`
+     * @type {Array}
+     * @default []
+     */
+    include: ['name'],
+
+    /**
+     * Exclude props that returns from `getFieldProps`
      * @type {Array}
      * @default []
      */
