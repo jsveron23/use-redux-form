@@ -1,0 +1,2 @@
+export const SET_INITIAL_VALUES = '@@uRF/SET_INITIAL_VALUES';
+export const UPDATE_FIELD = '@@uRF/UPDATE_FIELD';

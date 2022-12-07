@@ -1,6 +1,6 @@
 {
   "name": "use-redux-form",
-  "version": "1.1.2",
+  "version": "2.1.0",
   "description": "React hook for using Redux store",
   "author": "Tony Jin <jsveron23@gmail.com>",
   "license": "MIT",
@@ -29,15 +29,14 @@
     "url": "git+https://github.com/jsveron23/useReduxForm.git"
   },
   "scripts": {
-    "clean": "rimraf lib",
-    "build": "npm run clean && rollup --config ./rollup.config.js",
+    "clean": "rimraf lib es",
+    "build": "npm run clean && NODE_ENV=production rollup -c",
     "lint": "eslint 'src/**/*.js'",
     "prettier": "prettier -c src/**/*.js",
-    "test": "nyc ava",
     "prepublishOnly": "npm run build"
   },
   "prettier": {
-    "semi": false,
+    "semi": true,
     "singleQuote": true,
     "tabWidth": 2,
     "arrowParens": "always",
@@ -46,37 +45,31 @@
     "proseWrap": "always"
   },
   "devDependencies": {
-    "@ava/babel": "^1.0.1",
-    "@babel/core": "^7.13.8",
-    "@babel/eslint-parser": "^7.13.8",
-    "@babel/plugin-proposal-class-properties": "^7.13.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.13.8",
-    "@babel/plugin-transform-runtime": "^7.13.8",
-    "@babel/preset-env": "^7.13.8",
-    "@babel/preset-react": "^7.12.13",
-    "@rollup/plugin-babel": "^5.3.0",
-    "ava": "^3.15.0",
-    "browser-env": "^3.3.0",
-    "core-js": "^3.9.0",
-    "eslint": "^7.20.0",
-    "eslint-config-airbnb": "^18.2.1",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jsx-a11y": "^6.4.1",
-    "eslint-plugin-react": "^7.22.0",
-    "eslint-plugin-react-hooks": "^4.2.0",
-    "nyc": "^15.1.0",
-    "prettier": "^2.2.1",
+    "@ava/babel": "^2.0.0",
+    "@babel/core": "^7.20.2",
+    "@babel/eslint-parser": "^7.19.1",
+    "@babel/preset-env": "^7.20.2",
+    "@babel/preset-react": "^7.18.6",
+    "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "eslint": "^8.28.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-react": "^7.31.11",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^2.8.0",
     "rimraf": "^3.0.2",
-    "rollup": "^2.40.0"
+    "rollup": "^3.4.0"
   },
   "peerDependencies": {
-    "react": "^16.14.0",
-    "react-dom": "^16.14.0"
+    "react": ">=16.14.0",
+    "react-dom": ">=16.14.0",
+    "react-redux": ">=8.0.5"
   },
   "dependencies": {
-    "@babel/register": "^7.13.8",
-    "@babel/runtime": "^7.13.8",
-    "ramda": "^0.27.1",
-    "react-redux": "^7.2.2"
+    "@babel/register": "^7.18.9",
+    "@babel/runtime": "^7.20.1",
+    "lens-o": "^1.0.1",
+    "ramda": "^0.28.0"
   }
 }
