@@ -1,6 +1,6 @@
 {
   "name": "use-redux-form",
-  "version": "2.1.0",
+  "version": "2.1.2",
   "description": "React hook for using Redux store",
   "author": "Tony Jin <jsveron23@gmail.com>",
   "license": "MIT",
@@ -70,6 +70,7 @@
     "@babel/register": "^7.18.9",
     "@babel/runtime": "^7.20.1",
     "lens-o": "^1.0.1",
-    "ramda": "^0.28.0"
+    "ramda": "^0.28.0",
+    "use-previous": "^1.1.0"
   }
 }

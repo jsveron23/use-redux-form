@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import * as R from 'ramda';
 import { get } from 'lens-o';
+import usePrevious from 'use-previous';
 import { setInitialValues, updateField } from './redux/actions';
-import { isEvent, getTailPath, genericError, computeExclude } from './utils';
+import { isEvent, genericError, computeExclude } from './utils';
 
 /**
  * use-redux-from hook
@@ -37,24 +38,8 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
 
   const dispatch = useDispatch();
   const formState = useSelector(get(storePath), shallowEqual);
+  const prevFormState = usePrevious(formState);
   const [isDisabled, setIsDisabled] = useState(false);
-
-  useEffect(() => {
-    if (R.isNil(onChange)) {
-      if (storePath.indexOf('.') === -1) {
-        dispatch(setInitialValues(initialValues));
-      } else {
-        dispatch(
-          updateField({ name: getTailPath(storePath), value: initialValues }),
-        );
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    setIsDisabled(onDisable());
-  }, [onDisable]);
 
   const errors = useMemo(() => {
     // NOTE `initialValues` is possible to be given but not initialzed yet
@@ -65,13 +50,33 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
     return validate(formState) || {};
   }, [validate, formState]);
 
+  useEffect(() => {
+    if (R.isNil(onChange) && !R.isNil(initialValues)) {
+      if (storePath.indexOf('.') === -1) {
+        dispatch(setInitialValues(initialValues));
+      } else {
+        dispatch(
+          updateField({
+            name: R.compose(R.join('.'), R.tail, R.split('.'))(storePath),
+            value: initialValues,
+          }),
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    setIsDisabled(onDisable());
+  }, [onDisable]);
+
   // to Redux
   const handleChange = useCallback(
     (name, _shouldTransform) => (evt) => {
       let value = evt;
 
       if (isEvent(evt)) {
-        value = evt.target.value;
+        value = get('target.value', evt);
       }
 
       const args = {
@@ -83,7 +88,12 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
         onChange(args);
       } else {
         if (storePath.indexOf('.') > -1) {
-          args.name = `${getTailPath(storePath)}.${args.name}`;
+          args.name = R.compose(
+            R.join('.'),
+            R.append(args.name),
+            R.tail,
+            R.split('.'),
+          )(storePath);
         }
 
         dispatch(updateField(args));
@@ -98,7 +108,6 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
 
   const getFieldProps = useCallback(
     (fieldPath, options = {}) => {
-      // TODO strict checking (no special char except .)
       if (R.isNil(fieldPath) || !R.is(String, fieldPath)) {
         throw genericError('invalid [fieldPath] given!');
       }
@@ -114,7 +123,7 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
       let _value = get(_fieldPath, formState);
 
       if (typeof key === 'function' && R.is(Array, _value)) {
-        _fieldPath = `${_fieldPath}.${key(_value, formState)}`;
+        _fieldPath = [_fieldPath, key(_value, formState)].join('.');
         _value = get(_fieldPath, formState);
       }
 
@@ -126,17 +135,15 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
         });
       }
 
-      const fieldProps = {
-        onChange: handleChange(_fieldPath, _shouldTransform),
-        value: _value,
-        selected: _value,
-        disabled: isDisabled,
-        name: name || _fieldPath,
-      };
-
       return R.omit(
         R.compose(computeExclude(include), R.concat(exclude))(_exclude),
-        fieldProps,
+        {
+          onChange: handleChange(_fieldPath, _shouldTransform),
+          value: _value,
+          selected: _value,
+          disabled: isDisabled,
+          name: name || _fieldPath,
+        },
       );
     },
     [formState, isDisabled, handleChange, transform, exclude],
@@ -144,9 +151,10 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
 
   if (debug) {
     /* eslint-disable */
+    // TODO render only once
     console.groupCollapsed('%cuseReuxForm:', 'color: #bada55');
-    // TODO diff
-    console.log('state: ', formState);
+    console.log('previous form state: ', prevFormState);
+    console.log('current form state: ', formState);
     console.groupEnd();
     /* eslint-enable */
   }
