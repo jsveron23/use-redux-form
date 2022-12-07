@@ -3,7 +3,7 @@ import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import * as R from 'ramda';
 import { get } from 'lens-o';
 import { setInitialValues, updateField } from './redux/actions';
-import { isEvent, genericError } from './utils';
+import { isEvent, getTailPath, genericError, computeExclude } from './utils';
 
 /**
  * use-redux-from hook
@@ -40,14 +40,13 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
   const [isDisabled, setIsDisabled] = useState(false);
 
   useEffect(() => {
-    if (!onChange) {
+    if (R.isNil(onChange)) {
       if (storePath.indexOf('.') === -1) {
         dispatch(setInitialValues(initialValues));
       } else {
-        const [, ...restPath] = storePath.split('.');
-        const _storePath = restPath.join('.');
-
-        dispatch(updateField({ name: _storePath, value: initialValues }));
+        dispatch(
+          updateField({ name: getTailPath(storePath), value: initialValues }),
+        );
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,8 +65,9 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
     return validate(formState) || {};
   }, [validate, formState]);
 
+  // to Redux
   const handleChange = useCallback(
-    (name) => (evt) => {
+    (name, _shouldTransform) => (evt) => {
       let value = evt;
 
       if (isEvent(evt)) {
@@ -75,7 +75,7 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
       }
 
       const args = {
-        value: transform({ name, value }),
+        value: _shouldTransform ? transform({ name, value }) : value,
         name,
       };
 
@@ -83,10 +83,7 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
         onChange(args);
       } else {
         if (storePath.indexOf('.') > -1) {
-          const [, ...restPath] = storePath.split('.');
-          const _storePath = restPath.join('.');
-
-          args.name = `${_storePath}.${args.name}`;
+          args.name = `${getTailPath(storePath)}.${args.name}`;
         }
 
         dispatch(updateField(args));
@@ -95,49 +92,54 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
     [storePath, transform, onChange, dispatch],
   );
 
-  const computeExclude = useCallback(
-    (_exclude = [], include = []) => {
-      return R.compose(
-        R.without(...include),
-        R.uniq,
-        R.concat(exclude),
-      )(_exclude);
-    },
-    [exclude],
-  );
-
   const handleSubmit = useCallback(() => {
     onSubmit({ values: formState, errors });
   }, [onSubmit, errors, formState]);
 
   const getFieldProps = useCallback(
     (fieldPath, options = {}) => {
+      // TODO strict checking (no special char except .)
       if (R.isNil(fieldPath) || !R.is(String, fieldPath)) {
         throw genericError('invalid [fieldPath] given!');
       }
 
-      const { exclude: _exclude = [], include = [], name = '' } = options;
-      const transformedValue = transform({
-        name: fieldPath,
-        value: R.compose(
-          (v) => String(v),
-          R.defaultTo(''),
-          get(fieldPath),
-        )(formState),
-      });
+      const {
+        exclude: _exclude = [],
+        transform: _shouldTransform = true,
+        include = [],
+        name = '',
+        key,
+      } = options;
+      let _fieldPath = fieldPath;
+      let _value = get(_fieldPath, formState);
+
+      if (typeof key === 'function' && R.is(Array, _value)) {
+        _fieldPath = `${_fieldPath}.${key(_value, formState)}`;
+        _value = get(_fieldPath, formState);
+      }
+
+      if (_shouldTransform) {
+        // to field
+        _value = transform({
+          name: _fieldPath,
+          value: R.compose((v) => String(v), R.defaultTo(''))(_value),
+        });
+      }
 
       const fieldProps = {
-        onChange: handleChange(fieldPath),
-        value: transformedValue,
-        selected: transformedValue,
+        onChange: handleChange(_fieldPath, _shouldTransform),
+        value: _value,
+        selected: _value,
         disabled: isDisabled,
-        name: name || fieldPath,
+        name: name || _fieldPath,
       };
-      const excludeKeys = computeExclude(_exclude, include);
 
-      return R.omit(excludeKeys, fieldProps);
+      return R.omit(
+        R.compose(computeExclude(include), R.concat(exclude))(_exclude),
+        fieldProps,
+      );
     },
-    [formState, isDisabled, handleChange, transform, computeExclude],
+    [formState, isDisabled, handleChange, transform, exclude],
   );
 
   if (debug) {

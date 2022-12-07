@@ -68,7 +68,7 @@ const {
   getFieldProps
 } = useReduxForm('user.form', {
   /**
-   * Exclude props from `getFieldProps` return
+   * Exclude props from `getFieldProps` returns (global)
    * @default []
    * @type {Array}
    */
@@ -158,7 +158,10 @@ const {
    */
   debug: true
 }, {
-  ... // initialValues, work only when onChange null
+  /*
+     - initialValues
+     - work only when onChange is not given (experimental feature)
+   */
 })
 
 return (
@@ -205,7 +208,7 @@ const initialState = {
 
 const { value, selected, disabled, name, onChange } = getFieldProps(
   /**
-   * fieldPath (`username` => '')
+   * fieldPath
    * @type {String}
    * @required
    */
@@ -215,23 +218,43 @@ const { value, selected, disabled, name, onChange } = getFieldProps(
     /**
      * Field name
      * @type {String}
-     * @default ''
+     * @default fieldPath
      */
     name: 'userid',
 
     /**
-     * Include props that returns from `getFieldProps`
+     * Include props what excluded global (local)
      * @type {Array}
      * @default []
      */
     include: ['name'],
 
     /**
-     * Exclude props that returns from `getFieldProps`
+     * Exclude props from `getFieldProps` returns (local)
      * @type {Array}
      * @default []
      */
     exclude: ['selected'],
+
+    /**
+     * Dynamic fieldPath
+     * (let's say 'someParentState.list' is `fieldPath`)
+     * @param  {Array|Object}  fieldState object from `fieldPath`
+     * @param  {Array|Object}  state
+     * @return {String|Number}
+     */
+    key: (fieldState, state) => {
+      const idx = fieldState.findIndex((item) => item.id === 2);
+
+      // === someParentState.list.1.type
+      return `${idx}.type`;
+    },
+
+    /**
+     * Force transform stop
+     * @type {Boolean}
+     */
+    transform: false,
   },
 );
 ```
