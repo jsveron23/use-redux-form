@@ -70,6 +70,17 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
     setIsDisabled(onDisable());
   }, [onDisable]);
 
+  useEffect(() => {
+    if (debug) {
+      /* eslint-disable */
+      console.groupCollapsed('%c[use-redux-form]:', 'color: #bada55');
+      console.log('previous form state: ', prevFormState);
+      console.log('current form state: ', formState);
+      console.groupEnd();
+      /* eslint-enable */
+    }
+  }, [prevFormState, formState, debug]);
+
   // to Redux
   const handleChange = useCallback(
     (name, _shouldTransform) => (evt) => {
@@ -148,16 +159,6 @@ function useReduxForm(storePath, options = {}, initialValues = {}) {
     },
     [formState, isDisabled, handleChange, transform, exclude],
   );
-
-  if (debug) {
-    /* eslint-disable */
-    // TODO render only once
-    console.groupCollapsed('%cuseReuxForm:', 'color: #bada55');
-    console.log('previous form state: ', prevFormState);
-    console.log('current form state: ', formState);
-    console.groupEnd();
-    /* eslint-enable */
-  }
 
   return {
     isValidated: R.isEmpty(errors),

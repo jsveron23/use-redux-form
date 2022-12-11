@@ -1,7 +1,7 @@
 {
   "name": "use-redux-form",
-  "version": "2.1.2",
-  "description": "React hook for using Redux store",
+  "version": "2.1.3",
+  "description": "Connect form and Redux store through React hook",
   "author": "Tony Jin <jsveron23@gmail.com>",
   "license": "MIT",
   "main": "lib/index.js",
@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jsveron23/useReduxForm.git"
+    "url": "git+https://github.com/jsveron23/use-redux-form.git"
   },
   "scripts": {
     "clean": "rimraf lib es",

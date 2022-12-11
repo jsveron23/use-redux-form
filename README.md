@@ -31,20 +31,22 @@ useReduxForm('this-is-store-path', { onDisable: () => isLoading }); // v2
 useReduxForm('this-is-store-path', { exclude: [] }); // v2
 // debug (new)
 useReduxForm('this-is-store-path', { debug: true }); // v2
-// initialValues (new) - only work when onChange is not given
+// initialValues (new)
+// only work when onChange is not given
 useReduxForm(
   'this-is-store-path',
   {},
   {
-    /* here */
+    /* initialValues here */
   },
 ); // v2
 
 // getFieldProps
 const { value, selected, disabled, name, onChange } = getFieldProps('a.2.b', {
-  key: () => {}, // no more
   isRequired: true, // no more
   include: [], // new
+  transform: false, // new
+  key: () => {}, // v1, v2
   exclude: [], // v1, v2
   name: 'my-name-is', // v1, v2
 });
@@ -59,6 +61,8 @@ const { value, selected, disabled, name, onChange } = getFieldProps('a.2.b', {
 > `useReduxForm(options)`
 
 ```js
+import useReduxForm from 'use-redux-form';
+
 const {
   isValidated,
   isDisabled,
@@ -154,7 +158,7 @@ const {
 
   /**
    * Display current state log on console
-   * @default falss
+   * @default false
    */
   debug: true
 }, {
